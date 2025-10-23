@@ -3,7 +3,7 @@ import json
 
 #################################################
 
-DEBUG = 1
+DEBUG = 0
 
 #################################################
 
@@ -159,7 +159,29 @@ class Openspace:
         for _ in range(number_of_tables):
             table = Table(capacity=table_capacity)
             self.tables.append(table)
+    
+    @property
+    def seats_in_openspace(self)->int:
+        """
+        How many seats are in the room (int)
+        """
+        return self.number_of_tables*self.table_capacity
 
+    @property
+    def people_in_openspace(self)->int:
+        """
+        How many people are in the room (int)
+        """
+        return sum(1 for table in self.tables for seat in table.seats if not seat.is_free)
+
+    @property
+    def free_seats_in_openspace(self)->int:
+        """
+        How many free seats are in the room (int)
+        """
+        return sum(1 for table in self.tables for seat in table.seats if seat.is_free)
+
+    
     def organize(self, names: list[str]) -> None:
         """
         Assign people to seats across all tables.
@@ -176,45 +198,97 @@ class Openspace:
                     break
             if not assigned:
                 print(f"No free seats available for {name}!")  
-
-    def __str__(self):
+    
+    def room_to_string_by_people(self) ->str :
         """
-        Return a string representation of the Openspace.
+        String representation of object, group by people
+        """
+        people_list = []
+        tables_list = []
+        seats_list  = []
+        for table_index, table in enumerate(self.tables):
+            for seat_index, seat in enumerate(table.seats):
+                if(not seat.is_free):
+                    person = seat.occupant
+                    assert person not in people_list
+                    people_list.append(person)
+                    tables_list.append(table_index)
+                    seats_list.append(seat_index)
+        ### End of cycle
+        result_list = list(zip(people_list, tables_list, seats_list))
+        
+        result_list.sort(key=lambda x: x[0]) # Sort by name
+        
+        out_str = ''
+        for p, t, s in result_list:
+            out_str += f'{p} seats at the table {t} on the seat {s}\n'
+        return out_str
 
-        Returns:
-            str: Status of all tables and their seats.
+    def room_to_string_by_tables(self) ->str :    
+        """
+        String representation of object, group by people
         """
         out_str = ''
         for table_index, table in enumerate(self.tables):
-            out_str += f"Table {table_index+1}:"
+            
+            if(table_index != 0):
+                out_str += '\n\n'
+            out_str += f"# Table N{table_index+1}:"
+            
             for seat_index, seat in enumerate(table.seats):
                 if seat.is_free:
-                    out_str += f"\n  Seat {seat_index+1}: free"
+                    out_str += f"\n  @ N{seat_index+1}: ------"
                 else:
-                    out_str += f"\n  Seat {seat_index+1}: occupied by {seat.occupant}"
+                    out_str += f"\n  @ N{seat_index+1}: {seat.occupant}"
         return out_str
 
-    def display(self):
+    def room_to_string_in_json(self) ->str :    
         """
-        Print the current seating arrangement to the console.
+        String representation of object in json format
         """
-        print(str(self))
+        return json.dumps(self, default=lambda obj: obj.__dict__, indent=2)
 
-    def store(self, filename: str) -> None:
-        """
-        Store the seating arrangement in a JSON file.
+    
+    def __str__(self):
+        return room_to_string_by_tables(self)
 
+    def output(self,filename: str = None,mode: int = 1) -> None :
+        """
+        Output the current seating arrangement
+        
+        Modes:
+            1 - by people
+            2 - by tables
+            3 - in json
+            
         Args:
+            mode (int): Mode of input
             filename (str): Path to the output file. If None or empty, prints JSON to console.
         """
-        json_str = json.dumps(self, default=lambda obj: obj.__dict__, indent=2)
-        if not filename:
-            print(json_str)
-        else:
-            with open(filename, "w") as f:
-                f.write(json_str)
-    
+        if mode not in (1,2,3):
+            raise ValueError("Mode in function 'output must be 1, 2 or 3: see documentation!")
         
+        out_str = ''
+        if(mode==1):
+            out_str = room_to_string_by_people(self)
+        elif(mode==2):
+            out_str = room_to_string_by_tables(self)
+        elif(mode==3):
+            out_str = room_to_string_in_json(self)    
+        
+        if(not filename):  # Print to console
+            print(out_str)
+        else:  # Write to file
+            try:
+                with open(filename, "w") as f:
+                    f.write(out_str)
+    
+            except PermissionError:
+                print(f"Permission denied: {filename}")
+            except OSError as e:
+                print(f"OS error while writing file {filename}: {e}")         
+    ### End of def output    
+
                     
 #################################################
 
@@ -242,7 +316,8 @@ def class_openspace_test():
     
     #office_1.store(None)
     #office_2.store('out.txt')
- 
+
+     
  
 def class_table_test():
 
@@ -294,9 +369,6 @@ def read_names_from_file(filename:str)->list:
         
             lines = [line.strip() for line in my_file if line.strip()]  # Exclude empty strings
             
-        if(DEBUG):
-            print(lines)    
-    
     except FileNotFoundError:
         print("File not found:", DATA_DIR + filename)
     except PermissionError:
@@ -323,13 +395,15 @@ def class_seat_test():
 
 if __name__ == "__main__":
     
-    if(DEBUG):
-        class_seat_test()
-        class_table_test()
-        class_openspace_test()
-        
-        read_names_from_file('new_colleagues.csv')
-
+    #class_seat_test()
+    #class_table_test()
+    class_openspace_test()
+    
+    read_names_from_file('new_colleagues.csv')
+    
+    
+    
+    
     ### All tests passed
     print('\nAll tests passed')
     
