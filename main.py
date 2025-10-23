@@ -3,12 +3,6 @@ import json
 
 #################################################
 
-new_collegues = ["Aleksei","Amine","Anna","Astha","Brigitta",
-                 "Bryan","Ena","Esra","Faranges","Frederic",
-                 "Hamideh","Heloise","Imran","Intan K.",
-                 "Jens","Kristin","Michiel","Nancy","Pierrick",
-                 "Sandrine","Tim","Viktor","Welederufeal","Zivile"]
-
 #################################################
 
 class Seat:
@@ -16,7 +10,7 @@ class Seat:
         self.is_free = is_free
         self.occupant = occupant
 
-    def set_occupant(self,name):
+    def set_occupant(self,name: str):
         if self.is_free:
             self.occupant = name
             self.is_free = False
@@ -25,7 +19,12 @@ class Seat:
     
     def remove_occupant(self):
         self.occupant = None
-        self.is_free = True    
+        self.is_free = True
+    
+    def __str__(self):
+        out_str = f'Seat oocupated by {self.occupant}' if self.is_fre else f'Empty seat'
+        return out_str
+                  
 
 class Table:
     def __init__(self, capacity: int = 4):
@@ -54,7 +53,17 @@ class Table:
             if seat.is_free:
                 count += 1
         return count
-
+    
+    def __str__(self):
+        out_str = []
+        for seat in self.seats:
+            if seat.is_free:
+                out_str.append('--free')
+            else:    
+                out_str.append(self.occupant)
+        return( '\nTable:'+"\n".join(out_str) )
+        
+        
 class Openspace:
     def __init__(self, number_of_tables: int = 6, table_capacity: int = 4):
         self.number_of_tables = number_of_tables
@@ -66,7 +75,7 @@ class Openspace:
             self.tables.append(table)
     
     
-    def organize(self, names: list[str]):
+    def organize(self, names: list[str])->None:
 
         for name in names:
             assigned = False
@@ -78,22 +87,30 @@ class Openspace:
             if not assigned:
                 print(f"No free seats available for {name}!")  
 
-    def display(self):
+    def __str__(self):
+        out_str = ''
         for table_index, table in enumerate(self.tables):
-            print(f"Table {table_index+1}:")
+            out_str += f"Table {table_index+1}:"
             for seat_index, seat in enumerate(table.seats):
                 if seat.is_free:
-                    print(f"  Seat {seat_index+1}: free")
+                    out_str += f"\n  Seat {seat_index+1}: free"
                 else:
-                    print(f"  Seat {seat_index+1}: occupied by {seat.occupant}")
-
-    def store(self, filename: str):
+                    out_str += f"\n  Seat {seat_index+1}: occupied by {seat.occupant}"
+        return out_str
+        
+        
+    def display(self):
+        print( str(self) )
+ 
+    def store(self, filename: str)->None:
         json_str = json.dumps(self, default=lambda obj: obj.__dict__, indent=2)
         if( not filename):
             print(json_str)
         else:    
             with open(filename, "w") as f:
                 f.write(json_str)
+    
+        
                     
 #################################################
 
@@ -105,15 +122,22 @@ def class_openspace_test():
     office_1.tables[0].assign_seat("Bob")
     office_1.tables[1].assign_seat("Charlie")
     
-    #office_1.display()
+    #office_1.display() # USE capsys from pytest !! 
+
+    test_collegues = ["Aleksei","Amine","Anna","Astha","Brigitta",
+                     "Bryan","Ena","Esra","Faranges","Frederic",
+                     "Hamideh","Heloise","Imran","Intan K.",
+                     "Jens","Kristin","Michiel","Nancy","Pierrick",
+                     "Sandrine","Tim","Viktor","Welederufeal","Zivile"]
+
     
     office_2 = Openspace()
-    office_2.organize(new_collegues)
+    office_2.organize(test_collegues)
     
     #office_2.display()
     
-    office_1.store(None)
-    office_2.store('out.txt')
+    #office_1.store(None)
+    #office_2.store('out.txt')
  
  
 def class_table_test():
@@ -140,7 +164,25 @@ def class_table_test():
     except Exception as e:
         assert str(e) == 'No free seats available!'    
     
-
+def read_names_from_file(filename:str)->list:
+    
+    lines = []
+    
+    try:
+        
+        with open(filename, 'r') as my_file:
+        
+            lines = [line.strip() for line in my_file if line.strip()]  # Exclude empty strings
+            
+        # print(lines)    
+    
+    except FileNotFoundError:
+        print("File not found:", DATA_DIR + filename)
+    except PermissionError:
+        print("Permission error:", DATA_DIR + filename)
+    except OSError as e:
+        print("General OS file error:", e)
+    return lines
 
 def class_seat_test():
     
@@ -164,6 +206,8 @@ if __name__ == "__main__":
     class_seat_test()
     class_table_test()
     class_openspace_test()
+    
+    read_names_from_file('new_colleagues.csv')
     
 #################################################
 
