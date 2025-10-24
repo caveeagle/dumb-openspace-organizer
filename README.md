@@ -19,10 +19,10 @@ The main function in **main.py** is Openspace.output.
 
 The first parameter is mode wich is `int`:
 
-Modes:
-       1 - Compose list by people in alphabet. order
-        2 - Compose list by tables
-        3 - Output list in json format
+**Modes:**
+       **1** - Compose list by people in alphabet. order  
+       **2** - Compose list by tables  
+       **3** - Output list in json format  
 
 The second parameter is output filename wich is `string`
 In case of  string is `None` or empty, the output will be in the console.
