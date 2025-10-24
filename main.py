@@ -9,7 +9,7 @@ from utils.tests import openspace_test
 
 #################################################
 
-DEBUG = 1
+DEBUG = 0
 
 DEFAULT_COLLEAGUES_FILENAME = 'new_colleagues.csv'
 
